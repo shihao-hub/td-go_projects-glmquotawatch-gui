@@ -15,10 +15,10 @@ cd go_projects\glmquotawatch-gui
 npm install                           # 首次，在 frontend/ 内
 
 # 生产构建（产出 bin\glmquotawatch-gui.exe，数据目录 \prod，启用开机自启）：
-.\scripts\build-prod.ps1
+uv run scripts/build-prod.py
 
 # 开发构建（产出 bin\glmquotawatch-gui-dev.exe，数据目录 \dev，独立单例互斥，禁用开机自启）：
-.\scripts\build-dev.ps1
+uv run scripts/build-dev.py
 
 wails3 dev                            # 开发调试模式（前端热更新）
 ```
