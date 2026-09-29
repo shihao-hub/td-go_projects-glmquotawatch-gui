@@ -10,3 +10,5 @@ build/bin/
 # 子仓根 .gitignore 已覆盖 *.exe 等通用产物；此处补充项目特有规则
 .task/
 *.exe
+*.exe~
+bin/
