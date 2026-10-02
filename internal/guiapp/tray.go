@@ -2,6 +2,12 @@
 package guiapp
 
 import (
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -11,8 +17,18 @@ func (a *App) buildTray() {
 	a.tray.SetIcon(a.icon)
 	a.tray.SetTooltip("GLM 用量监控")
 
+	// 注册双击托盘图标事件：显示/唤出主窗口
+	a.tray.OnDoubleClick(func() {
+		a.ensureMainWindow()
+	})
+
 	menu := a.app.NewMenu()
 	menu.Add("显示主窗").OnClick(func(*application.Context) { a.ensureMainWindow() })
+	menu.Add("打开 exe 目录").OnClick(func(*application.Context) {
+		if err := openExeDir(); err != nil {
+			a.rt.ui.NotifyError("打开目录失败", err.Error())
+		}
+	})
 	menu.Add("立即采样").OnClick(func(*application.Context) {
 		if _, err := a.rt.SampleNow(); err != nil {
 			a.rt.ui.NotifyError("立即采样失败", err.Error())
@@ -48,6 +64,25 @@ func (a *App) buildTray() {
 
 	// 初始勾选状态（静音随配置刷新发生在 rt.Start 后首轮；自启在此直接查）
 	a.autostartIt.SetChecked(a.rt.AutostartEnabled())
+}
+
+// openExeDir 使用操作系统文件资源管理器打开当前可执行文件所在目录。
+func openExeDir() error {
+	exe, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("获取可执行文件路径失败: %w", err)
+	}
+	dir := filepath.Dir(exe)
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("explorer.exe", dir)
+	case "darwin":
+		cmd = exec.Command("open", dir)
+	default:
+		cmd = exec.Command("xdg-open", dir)
+	}
+	return cmd.Start()
 }
 
 // ---- uiBridge 实现：runtime → 托盘/菜单 的单向更新 ----
